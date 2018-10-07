@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean class="redis.clients.jedis.JedisPool" id="jedisPool">
+        <!--构造函数注入-->
+        <constructor-arg ref="jedisPoolConfig" />
+        <!--连接地址-->
+        <constructor-arg value="192.168.241.128" />
+        <!--端口号-->
+        <constructor-arg value="6379" />
+        <!--超时时间-->
+        <constructor-arg value="6000" />
+        <!--密码-->
+        <constructor-arg value="123456" />
+    </bean>
+
+    <bean class="redis.clients.jedis.JedisPoolConfig" id="jedisPoolConfig" />
+</beans>

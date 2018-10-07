@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <import resource="spring-dao.xml" />
+    <import resource="spring-jedis.xml" />
+
+    <!--扫描文件路径-->
+    <context:component-scan base-package="com.royking" />
+
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager"></property>
+        <property name="loginUrl" value="login.html"></property>
+        <!--未认证的跳转路径-->
+        <property name="unauthorizedUrl" value="403.html"></property>
+        <property name="filterChainDefinitions">
+            <value>
+                /login.html = anon
+                /subLogin = anon
+                /checkRoles1 = roles["admin"]
+                /checkRoles2 = roles["admin","admin2"]
+                /checkPerms1 = perms["user:select"]
+                /checkPerms2 = perms["user:select","user:add"]
+                /checkRoles3 = roleOr["admin","admin2"]
+                /* = authc
+            </value>
+        </property>
+        <!--自定义filter-->
+        <property name="filters" >
+            <util:map>
+                <entry key="roleOr" value-ref="rolesOrFilter" />
+            </util:map>
+        </property>
+    </bean>
+    <!--自定义filter-->
+    <bean class="com.royking.shiro.filter.RolesOrFilter" id="rolesOrFilter" />
+
+    <!--创建securityManager对象-->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <!--设置自定义realm-->
+        <property name="realm" ref="realm"></property>
+        <property name="sessionManager" ref="sessionManager" />
+        <property name="cacheManager" ref="cacheManager" />
+        <property name="rememberMeManager" ref="cookieRememberMeManager" />
+    </bean>
+
+    <!--realm自定义对象-->
+    <bean id="realm" class="com.royking.shiro.realm.CustomerRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"></property>
+    </bean>
+
+    <!--session会话管理对象,默认对象-->
+    <!--<bean class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager" id="sessionManager" >
+        <property name="sessionDAO" ref="redisSessionDao" />
+    </bean>-->
+
+    <!--session会话管理对象,自定义对象-->
+    <bean class="com.royking.shiro.session.CustomSessionManager" id="sessionManager" >
+        <property name="sessionDAO" ref="redisSessionDao" />
+    </bean>
+
+    <!--自定义session会话，通过redis-->
+    <bean id="redisSessionDao" class="com.royking.shiro.session.RedisSessionDao" />
+
+    <!--自定义shiro缓存-->
+    <bean class="com.royking.shiro.cache.RedisCacheManager" id="cacheManager" />
+
+    <!--设置加密的算法-->
+    <bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher" id="credentialsMatcher">
+        <property name="hashAlgorithmName" value="md5"></property>
+        <property name="hashIterations" value="1"></property>
+    </bean>
+
+    <!--rememberMe-->
+    <bean class="org.apache.shiro.web.mgt.CookieRememberMeManager" id="cookieRememberMeManager" >
+        <property name="cookie" ref="simpleCookie" />
+    </bean>
+    <bean class="org.apache.shiro.web.servlet.SimpleCookie" id="simpleCookie" >
+        <!--cookie名称-->
+        <constructor-arg value="rememberMe" />
+        <!--cookie存活时间-->
+        <property name="maxAge" value="200000000" />
+    </bean>
+</beans>
